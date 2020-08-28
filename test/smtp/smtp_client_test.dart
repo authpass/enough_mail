@@ -128,6 +128,23 @@ void main() {
     }
   });
 
+  test('Forward MimeMessage', () async {
+    final lines = await File('test/smtp/dummy_email.mime').readAsLines();
+    // make sure lines are always separated with \r\n
+    final bodyRaw = lines.join('\r\n');
+    final mimeMessage = MimeMessage()
+      ..bodyRaw = bodyRaw
+      ..parse();
+    final messageBuilder = MessageBuilder.prepareForwardMessage(mimeMessage,
+        from: MailAddress(null, 'example@example.com'));
+    messageBuilder.to = [MailAddress(null, 'recipient@example.com')];
+    final toSend = messageBuilder.buildMimeMessage();
+    final response = await client.sendMessage(toSend);
+    expect(response.type, SmtpResponseType.success);
+    expect(response.isOkStatus, isTrue);
+  });
+}
+
 class DummySmtpCommand extends SmtpCommand {
   DummySmtpCommand(String command) : super(command);
   @override
